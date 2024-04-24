@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 use core::ptr::NonNull;
-use devices::{frame_alloc_much, FrameTracker, Mutex, VIRT_ADDR_START};
+use devices::{frame_alloc_much, utils::virt_to_phys, FrameTracker, Mutex, VIRT_ADDR_START};
 use log::trace;
 use virtio_drivers::{BufferDirection, Hal, PhysAddr};
 
@@ -36,12 +36,16 @@ unsafe impl Hal for HalImpl {
     }
 
     unsafe fn mmio_phys_to_virt(paddr: PhysAddr, _size: usize) -> NonNull<u8> {
+        warn!("phys to virt");
         NonNull::new((usize::from(paddr) | VIRT_ADDR_START) as *mut u8).unwrap()
     }
 
     unsafe fn share(buffer: NonNull<[u8]>, _direction: BufferDirection) -> PhysAddr {
+        // info!("share: {:#x}", buffer.addr());
         // Nothing to do, as the host already has access to all memory.
-        buffer.as_ptr() as *mut u8 as usize - VIRT_ADDR_START
+        virt_to_phys(buffer.as_ptr() as *mut u8 as usize)
+            .unwrap_or(buffer.as_ptr() as *mut u8 as usize - VIRT_ADDR_START)
+        // buffer.as_ptr() as *mut u8 as usize - VIRT_ADDR_START
     }
 
     unsafe fn unshare(_paddr: PhysAddr, _buffer: NonNull<[u8]>, _direction: BufferDirection) {

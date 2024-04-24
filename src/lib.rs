@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(used_with_arg)]
+#![feature(strict_provenance)]
 
 extern crate alloc;
 #[macro_use]
@@ -24,16 +25,16 @@ use virtio_drivers::transport::{
     DeviceType, Transport,
 };
 
-#[cfg(any(target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(any(target_arch = "x86_64"))]
 use devices::ALL_DEVICES;
 
-#[cfg(any(target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(any(target_arch = "x86_64"))]
 use virtio_drivers::transport::pci::{
     bus::{BarInfo, Cam, Command, DeviceFunction, PciRoot},
     virtio_device_type, PciTransport,
 };
 
-#[cfg(any(target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(any(target_arch = "x86_64"))]
 use crate::virtio_impl::HalImpl;
 
 pub fn init_mmio(node: &FdtNode) -> Arc<dyn Driver> {
@@ -74,7 +75,7 @@ fn virtio_device(transport: MmioTransport, node: &FdtNode) -> Arc<dyn Driver> {
     }
 }
 
-#[cfg(any(target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(any(target_arch = "x86_64"))]
 fn enumerate_pci(mmconfig_base: *mut u8) {
     info!("mmconfig_base = {:#x}", mmconfig_base as usize);
 
@@ -107,7 +108,7 @@ fn enumerate_pci(mmconfig_base: *mut u8) {
     }
 }
 
-#[cfg(any(target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(any(target_arch = "x86_64"))]
 fn virtio_device_probe(transport: impl Transport + 'static) {
     let device = match transport.device_type() {
         DeviceType::Block => Some(virtio_blk::init(transport, Vec::new())),
@@ -125,7 +126,7 @@ fn virtio_device_probe(transport: impl Transport + 'static) {
     }
 }
 
-#[cfg(any(target_arch = "x86_64", target_arch = "loongarch64"))]
+#[cfg(any(target_arch = "x86_64"))]
 fn dump_bar_contents(root: &mut PciRoot, device_function: DeviceFunction, bar_index: u8) {
     let bar_info = root.bar_info(device_function, bar_index).unwrap();
     trace!("Dumping bar {}: {:#x?}", bar_index, bar_info);
@@ -145,17 +146,11 @@ fn dump_bar_contents(root: &mut PciRoot, device_function: DeviceFunction, bar_in
     trace!("End of dump");
 }
 
-#[cfg(not(any(target_arch = "x86_64", target_arch = "loongarch64")))]
+#[cfg(not(any(target_arch = "x86_64")))]
 driver_define!("virtio,mmio", init_mmio);
 
 #[cfg(target_arch = "x86_64")]
 driver_define!({
     enumerate_pci((0xB000_0000usize | VIRT_ADDR_START) as _);
-    None
-});
-
-#[cfg(target_arch = "loongarch64")]
-driver_define!({
-    enumerate_pci((0x2000_0000 | 0x8000000000000000usize) as _);
     None
 });
