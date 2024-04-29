@@ -41,10 +41,10 @@ unsafe impl Hal for HalImpl {
     }
 
     unsafe fn share(buffer: NonNull<[u8]>, _direction: BufferDirection) -> PhysAddr {
-        // info!("share: {:#x}", buffer.addr());
+        let raw_ptr = buffer.as_ptr() as *mut u8 as usize;
         // Nothing to do, as the host already has access to all memory.
-        virt_to_phys(buffer.as_ptr() as *mut u8 as usize)
-            .unwrap_or(buffer.as_ptr() as *mut u8 as usize - VIRT_ADDR_START)
+        virt_to_phys(raw_ptr)
+            .unwrap_or( raw_ptr & (!VIRT_ADDR_START))
         // buffer.as_ptr() as *mut u8 as usize - VIRT_ADDR_START
     }
 

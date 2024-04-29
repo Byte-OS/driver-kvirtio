@@ -43,6 +43,10 @@ impl<T: Transport + 'static> BlkDriver for VirtIOBlock<T> {
             .write_blocks(block_id, buf)
             .expect("can't write block by virtio block");
     }
+
+    fn capacity(&self) -> usize {
+        self.inner.lock().capacity() as usize * 0x200
+    }
 }
 
 pub fn init<T: Transport + 'static>(transport: T, irqs: Vec<u32>) -> Arc<dyn Driver> {
